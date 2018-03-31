@@ -8,11 +8,14 @@ import os
 from Bio import Entrez
 
 def fetch_medline_repo_files(filename):
-    print("Fetching Medline Baseline Repo");
+    print("Fetching Medline Baseline Repo" + filename);
     filename = "Scharrhud_Data/medline/" + filename;
     medlineBaseRepo = open(filename, "r");
     testData = Entrez.read(medlineBaseRepo);
-    testDataFolder = 'Scharrhud_Data/TestData/';
+
+    # testDataFolder = 'Scharrhud_Data/TestData/';
+
+    testDataFolder = '/Volumes/EXTERNALDRV/TestData/';
 
     for record in testData['PubmedArticle']:
     	pmid = record['MedlineCitation']['PMID'];

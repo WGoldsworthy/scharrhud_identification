@@ -34,7 +34,8 @@ def download_medline_repo(config):
 		path = 'Scharrhud_Data/medline/';
 
 	url = "https://mbr.nlm.nih.gov/Download/Baselines/2017/medline17n0"
-	for i in range(1, 892):
+	# Range was changed here to only download years 2008-2015 (580-800)
+	for i in range(580, 800):
 		num_len = len(str(i));
 		if num_len == 1:
 			filename = "00" + str(i) + ".xml.gz";

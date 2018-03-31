@@ -19,7 +19,7 @@ class CommandLine:
     def __init__(self):
         print("Scharrhud Document Identification.")
 
-        opts, args = getopt.getopt(sys.argv[1:], 'hqmo:r:')
+        opts, args = getopt.getopt(sys.argv[1:], 'hqmo:r:p:')
         opts = dict(opts)
             
         if '-h' in opts:
@@ -46,6 +46,11 @@ class CommandLine:
         else:
             self.num_results = 50
 
+        if '-p' in opts:
+            self.test_path = opts['-p']
+        else:
+            self.test_path = 'Scharrhud_Data/TestData/';
+
     def print_help(self):
         help = """\
             ------------------------------------------------------------
@@ -59,6 +64,7 @@ class CommandLine:
                      into individual text files then I recommend using the format_medline_files.py script.
                 -o FILE : write results to an output FILE (Default: stdout)
                 -r NUMBER : Number of top results you want to return (Defualt: 50)
+                -p PATH : The path to your test data (Default: Scharrhud_Data/TestData/)
             ------------------------------------------------------------\
             """
         print(help);
@@ -161,7 +167,8 @@ def fetch_medline_repo_files():
 if config.fetch_medline:
     fetch_medline_repo_files();
 
-path = 'Scharrhud_Data/TestData/';
+if config.test_path:
+    path = config.test_path;
 
 doc_ids = os.listdir(path);
 

@@ -1,0 +1,32 @@
+notes.txt
+
+medline0001: 
+medline0279: 1993
+medline580: 2007/2008
+medline0600: 2008.05
+medline0820: 2015
+
+
+approx 5-6 million files
+
+Running on 4 repos ~115,000 files = 7.727 minutes
+
+
+- I have 220 xml repos for year 2008-2015. ~67GB
+- Splitting to individual files ~ 20-25k files per repo meaning around 5.5 million files
+- Could we run small sets at a time, taking the top 1000 from each and putting into a final set to run on? 
+	- Reduces hardware reliability as not running on such huge sets at a time. What affect would it have on the results though? Assume would affect the tf.idf scores 
+
+
+- Running on 5 million files should be fine. Approx 6 hour runtime.
+
+- Need to add precision, recall and f-measure analysis.
+
+RELEVANCE FEEDBACK
+
+- Run query on initial set
+- take the top X relevant documents
+- take the top N terms from collection of relevant documents X
+- Add set of terms N, to the query.
+
+-> Can also reduce weight of non relevant terms
