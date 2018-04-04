@@ -19,7 +19,7 @@ class CommandLine:
     def __init__(self):
         print("Scharrhud Document Identification.")
 
-        opts, args = getopt.getopt(sys.argv[1:], 'hqmo:r:p:')
+        opts, args = getopt.getopt(sys.argv[1:], 'hqo:r:p:')
         opts = dict(opts)
             
         if '-h' in opts:
@@ -29,11 +29,6 @@ class CommandLine:
             self.fetch_query_abstracts = True;
         else:
             self.fetch_query_abstracts = False;
-
-        if '-m' in opts:
-            self.fetch_medline = True;
-        else: 
-            self.fetch_medline = False;
 
         if '-o' in opts:
             self.write_to_output_file = True;
@@ -59,9 +54,6 @@ class CommandLine:
                 -h : print this help message
                 -q : fetch the query abstracts and write to a query file. 
                      If already have the abstracts and file, this can be turned off to reduce runtime.
-                -m : fetch the Medline Baseline Repo. These are all the documents
-                     that will be tested against. If you need to redownload and process all of the files
-                     into individual text files then I recommend using the format_medline_files.py script.
                 -o FILE : write results to an output FILE (Default: stdout)
                 -r NUMBER : Number of top results you want to return (Defualt: 50)
                 -p PATH : The path to your test data (Default: Scharrhud_Data/TestData/)
@@ -136,36 +128,6 @@ def fetch_query_abstracts():
 
 if config.fetch_query_abstracts:
     fetch_query_abstracts();
-
-# Section for handling the Test data i.e. The documents that the query will be checked against.
-
-# TODO: move this into a different file. require_relative
-# The function should parse all medline xml files not just a single.
-def fetch_medline_repo_files():
-    print("Fetching Medline Baseline Repo");
-    medlineBaseRepo = open('Scharrhud_Data/medline17n0001.xml', "r");
-    testData = Entrez.read(medlineBaseRepo);
-    testDataFolder = 'Scharrhud_Data/TestData/';
-
-    for record in testData['PubmedArticle']:
-    	pmid = record['MedlineCitation']['PMID'];
-
-    	try: 
-    		recordFileName = testDataFolder + str(pmid) + '.txt';
-    		recordFile = open(recordFileName, "w");
-
-    		if type(record['MedlineCitation']['Article']['Abstract']['AbstractText']) is list:
-    			recordFile.write(record['MedlineCitation']['Article']['Abstract']['AbstractText'][0]);
-    		else:
-    			recordFile.write(record['MedlineCitation']['Article']['Abstract']['AbstractText']);
-    	
-    	except KeyError:
-    		# Only want to include files that have an abstract
-    		os.remove(recordFileName);
-    print("Finished Fetching Medline Baseline Repo");
-
-if config.fetch_medline:
-    fetch_medline_repo_files();
 
 if config.test_path:
     path = config.test_path;

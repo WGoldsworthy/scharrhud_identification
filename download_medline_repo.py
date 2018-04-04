@@ -28,7 +28,7 @@ def download_medline_repo(config):
 	print("Downloading Medline Repo");
 	# At the time of writing there are 892 medline files available on the 2017 repo.
 	
-	if config.path == True:
+	if config.path:
 		path = config.path;
 	else:
 		path = 'Scharrhud_Data/medline/';
