@@ -31,7 +31,7 @@ Use the -t flag to define the path to which you want the individual text files t
 python3 format_medline_files.py -p Scharrhud_Data/medline/ -t Scharrhud_Data/TestData/
 ```
 
-Now that all the data is available, the system should be ready to run.
+Now that all the data is available, the system should be ready to run. The main script for a normal text mining run is the scarrhud_identification.py
 
 
 ### Prerequisites

@@ -102,9 +102,10 @@ def check_against_gold():
 		if retrieved not in relevant_docs:
 			B = B + 1;
 
-	print("A: " + str(A))
-	print("B: " + str(B))
-	print("C: " + str(C))
+	print("Total Retrieved: " + str(len(retrieved_docs)));
+	print("Relevant documents retrieved: A: " + str(A))
+	print("False Positives: B: " + str(B))
+	print("Relevant documents not retrieved: C: " + str(C))
 
 	recall = A / (A + C);
 	precision = A / (A + B);

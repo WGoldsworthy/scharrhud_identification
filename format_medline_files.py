@@ -29,7 +29,7 @@ class CommandLine:
 config = CommandLine();
 
 def fetch_medline_repo_files(filename):
-    print("Fetching Medline Baseline Repo" + filename);
+    print("Fetching Medline Baseline Repo " + filename);
     # filename = "Scharrhud_Data/medline/" + filename;
     filename = config.path + filename;
     medlineBaseRepo = open(filename, "r");

@@ -77,7 +77,7 @@ def download_medline_repo(config):
 
 warning = """
 This script will download all of the medline repo files for 2017.
-This is approximately 30GB of data:
+This is approximately 300GB of data:
 """;
 
 print(warning);

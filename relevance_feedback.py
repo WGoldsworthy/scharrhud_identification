@@ -23,21 +23,25 @@ class CommandLine:
 	def __init__(self):
 		print("Scharrhud Document Identification.")
 
-		opts, args = getopt.getopt(sys.argv[1:], 'hqo:r:p:i:m:')
+		opts, args = getopt.getopt(sys.argv[1:], 'hq:o:r:p:i:m:s:nt:')
 		opts = dict(opts)
 			
 		if '-h' in opts:
 			self.print_help();
 
+		# CHANGED TO SPECIFY QUERY FILE
 		if '-q' in opts:
-			self.fetch_query_abstracts = True;
+			self.query = opts['-q']
+			#self.fetch_query_abstracts = True;
 		else:
-			self.fetch_query_abstracts = False;
+			#self.fetch_query_abstracts = False;
+			self.query = 'Scharrhud_Data/relevance_feedback/query.txt';
 
 		if '-o' in opts:
 			self.write_to_output_file = True;
 			self.output_file = opts['-o']
 		else:
+			self.write_to_output_file = False;
 			self.output_file = None
 
 		if '-r' in opts:
@@ -48,18 +52,36 @@ class CommandLine:
 		if '-p' in opts:
 			self.test_path = opts['-p']
 		else:
-			self.test_path = 'Scharrhud_Data/relevance_feedback/TestData';
+			self.test_path = 'Scharrhud_Data/relevance_feedback/TestData/';
 
 		if '-i' in opts:
 			self.iterations = opts['-i']
 		else:
 			self.iterations = 1;
 
+		if '-n' in opts:
+			self.save = True;
+		else:
+			self.save = False;
+
 		if '-m' in opts:
 			self.preload = True;
 			self.tfidf = opts['-m'];
 		else:
 			self.preload = False;
+
+		if '-s' in opts:
+			self.bySimilarity = True;
+			self.simValue = opts['-s'];
+		else:
+			self.bySimilarity = False;
+
+		if '-t' in opts:
+			self.termsToAdd = True;
+			self.terms = opts['-t'];
+		else:
+			self.terms = 20;
+
 
 	def print_help(self):
 		help = """\
@@ -76,10 +98,6 @@ class CommandLine:
 			"""
 		print(help);
 		sys.exit()
-
-	def fetch_query(self):
-		print("Fetch query Abstract");
-		fetch_query_abstracts();
 
 start = timeit.default_timer();
 
@@ -101,17 +119,26 @@ for pmid in idsfile:
 	pmid = pmid[3:];
 	Pids.append(pmid);
 
+s_file = open('PubMed_stopwords.txt','r')
+stop_words = [];
+for word in s_file:
+	stop_words.append(word.strip());
+
 stemmer = nltk.stem.lancaster.LancasterStemmer();
 remove_punctuation_map = dict((ord(char), None) for char in string.punctuation);
 
 def stem_tokens(tokens):
+	# remove stop words
+	filtered = [w for w in tokens if not w in stop_words]
+	#remove numbers
+	new_items = [item for item in filtered if not item.isdigit()]
 	return [stemmer.stem(item) for item in tokens]
 
 def normalize(text):
 	return stem_tokens(nltk.word_tokenize(text.lower().translate(remove_punctuation_map)))
 
 if not config.preload:
-	vectorizer = TfidfVectorizer(tokenizer=normalize, stop_words='english');
+	vectorizer = TfidfVectorizer(tokenizer=normalize, stop_words=stop_words);
 
 Entrez.email = 'wjgoldsworthy1@sheffield.ac.uk';
 
@@ -126,8 +153,11 @@ def load_sparse_csr(filename):
 def improve_query(results, iteration):
 	doc_names = [x[0] for x in results]
 	docs = [open(path+f, 'r').read() for f in doc_names]
-	terms = vectorizer.fit_transform(docs);
-	feature_names = vectorizer.get_feature_names();
+	
+	vectorizer2 = TfidfVectorizer(tokenizer=normalize, stop_words=stop_words);
+	terms = vectorizer2.fit_transform(docs);
+	
+	feature_names = vectorizer2.get_feature_names();
 	scores = zip(feature_names, np.asarray(terms.sum(axis=0)).ravel())
 	sorted_scores = sorted(scores, key=lambda x: x[1])
 	
@@ -136,19 +166,21 @@ def improve_query(results, iteration):
 
 	new_query = open('Scharrhud_Data/relevance_feedback/results/query' + str(iteration_num + 1) + '.txt', 'w');
 	new_query.write(query);
-	for item in sorted_scores[-300:]:
+
+	numTerms = int(config.terms) * (-1);
+	for item in sorted_scores[numTerms:]:
 		new_query.write(item[0]);
 		new_query.write(' ');
 
 	new_query.close();
 	query_file.close();
 	
-	for item in sorted_scores:
-		print("{0:50} Score: {1}".format(item[0], item[1]));
-	terms_file = open('Scharrhud_Data/relevance_feedback/results/terms_to_add.txt', "w");
-	for item in sorted_scores[-300:]:
-		terms_file.write(item[0]);
-		terms_file.write('\n');
+	# for item in sorted_scores:
+	#  print("{0:50} Score: {1}".format(item[0], item[1]));
+	# terms_file = open('Scharrhud_Data/relevance_feedback/results/terms_to_add.txt', "w");
+	# for item in sorted_scores[-300:]:
+	# 	terms_file.write(item[0]);
+	# 	terms_file.write('\n');
 
 # Fetches the abstracts fro each of the documents in the scharrhud database (query).
 # Writes all abstracts into a single file which will be used as the query for the cosine similarity
@@ -176,20 +208,26 @@ def fetch_query_abstracts():
 	print("Finished Fetching Query Abstracts");
 
 
-if config.fetch_query_abstracts:
-	fetch_query_abstracts();
+# if config.fetch_query_abstracts:
+# 	fetch_query_abstracts();
 
 if config.test_path:
 	path = config.test_path;
 
 iteration_num = 0;
-shutil.copy2('Scharrhud_Data/relevance_feedback/query.txt', 'Scharrhud_Data/relevance_feedback/results/query0.txt');
+# shutil.copy2('Scharrhud_Data/relevance_feedback/query.txt', 'Scharrhud_Data/relevance_feedback/results/query0.txt');
+# shutil.copy2('Scharrhud_Data/relevance_feedback/results/query200.txt', 'Scharrhud_Data/relevance_feedback/results/query0.txt');
+
+shutil.copy2('Scharrhud_Data/test_classifier/query/query.txt', 'Scharrhud_Data/relevance_feedback/results/query0.txt');
+
+doc_ids = os.listdir(path);
+
+num_docs = len(doc_ids);
+print("There are " + str(num_docs) + " documents in the test data.");
 
 while int(config.iterations) > 0:
-	doc_ids = os.listdir(path);
 
-	num_docs = len(doc_ids);
-	print("There are " + str(num_docs) + " documents in the test data.");
+	print('[ITERATION NUMBER: ' + str(iteration_num) +']');
 
 	if config.preload:
 		print("Beginning Load of saved Matrix")
@@ -201,10 +239,14 @@ while int(config.iterations) > 0:
 		print("Calculating tfidf scores");
 		documents = [open(path+f, 'r').read() for f in doc_ids];
 		tfidf = vectorizer.fit_transform(documents);
-		with open('vectorizer.pk', 'wb') as fin:
-			pickle.dump(vectorizer, fin);
-		print("Finished calculating tfidf scores");
-		save_sparse_csr('tfidf', tfidf);
+
+
+		if config.save:
+			print("Saving tfidf objects")
+			with open('vectorizer.pk', 'wb') as fin:
+				pickle.dump(vectorizer, fin);
+			print("Finished calculating tfidf scores");
+			save_sparse_csr('tfidf', tfidf);
 
 	
 	query_file = open('Scharrhud_Data/relevance_feedback/results/query' + str(iteration_num) +'.txt', "r");
@@ -232,10 +274,21 @@ while int(config.iterations) > 0:
 # As default this is off and results are printed to console.
 def write_to_output_file(ranked):
 	output_file = open(config.output_file, "w");
-	for x in range(0, int(config.num_results)):
-		output_file.write(str(x + 1) + ": ");
-		output_file.write(' '.join(map(str , ranked[x])));
-		output_file.write('\n');
+	if config.bySimilarity:
+		x = 0;
+		for item in ranked:
+			if item[1] >= float(config.simValue):
+				output_file.write(str(x + 1) + ": ");
+				output_file.write(' '.join(map(str , ranked[x])));
+				output_file.write('\n');
+				x = x + 1;
+			else:
+				break;
+	else:
+		for x in range(0, int(config.num_results)):
+			output_file.write(str(x + 1) + ": ");
+			output_file.write(' '.join(map(str , ranked[x])));
+			output_file.write('\n');
 
 
 if config.write_to_output_file:

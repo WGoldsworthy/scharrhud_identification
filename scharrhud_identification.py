@@ -19,7 +19,7 @@ class CommandLine:
     def __init__(self):
         print("Scharrhud Document Identification.")
 
-        opts, args = getopt.getopt(sys.argv[1:], 'hqo:r:p:')
+        opts, args = getopt.getopt(sys.argv[1:], 'hqo:r:p:s:')
         opts = dict(opts)
             
         if '-h' in opts:
@@ -34,6 +34,7 @@ class CommandLine:
             self.write_to_output_file = True;
             self.output_file = opts['-o']
         else:
+            self.write_to_output_file = False;
             self.output_file = None
 
         if '-r' in opts:
@@ -45,6 +46,12 @@ class CommandLine:
             self.test_path = opts['-p']
         else:
             self.test_path = 'Scharrhud_Data/TestData/';
+
+        if '-s' in opts:
+            self.bySimilarity = True;
+            self.simValue = opts['-s'];
+        else:
+            self.bySimilarity = False;
 
     def print_help(self):
         help = """\
@@ -86,16 +93,25 @@ for pmid in idsfile:
 	pmid = pmid[3:];
 	Pids.append(pmid);
 
+s_file = open('PubMed_stopwords.txt','r')
+stop_words = [];
+for word in s_file:
+    stop_words.append(word.strip());
+
 stemmer = nltk.stem.lancaster.LancasterStemmer();
 remove_punctuation_map = dict((ord(char), None) for char in string.punctuation);
 
 def stem_tokens(tokens):
+    # remove stop words
+    filtered = [w for w in tokens if not w in stop_words]
+    #remove numbers
+    new_items = [item for item in filtered if not item.isdigit()]
     return [stemmer.stem(item) for item in tokens]
 
 def normalize(text):
     return stem_tokens(nltk.word_tokenize(text.lower().translate(remove_punctuation_map)))
 
-vectorizer = TfidfVectorizer(tokenizer=normalize, stop_words='english');
+vectorizer = TfidfVectorizer(tokenizer=normalize, stop_words=stop_words);
 
 Entrez.email = 'wjgoldsworthy1@sheffield.ac.uk';
 
@@ -161,10 +177,21 @@ ranked = sorted(doc_sim_values.items(), key=operator.itemgetter(1), reverse=True
 # As default this is off and results are printed to console.
 def write_to_output_file(ranked):
     output_file = open(config.output_file, "w");
-    for x in range(0, int(config.num_results)):
-        output_file.write(str(x + 1) + ": ");
-        output_file.write(' '.join(map(str , ranked[x])));
-        output_file.write('\n');
+    if config.bySimilarity:
+        x = 0;
+        for item in ranked:
+            if item[1] >= float(config.simValue):
+                output_file.write(str(x + 1) + ": ");
+                output_file.write(' '.join(map(str , ranked[x])));
+                output_file.write('\n');
+                x = x + 1;
+            else:
+                break;
+    else:
+        for x in range(0, int(config.num_results)):
+            output_file.write(str(x + 1) + ": ");
+            output_file.write(' '.join(map(str , ranked[x])));
+            output_file.write('\n');
 
 if config.write_to_output_file:
     write_to_output_file(ranked);
